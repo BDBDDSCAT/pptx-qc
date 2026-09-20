@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pptx-qc"
+version = "0.1.0"
+description = "Pre-delivery QC linter for PowerPoint decks: dummy text, missing fonts, text overflow, simplified-Chinese contamination, low-resolution images."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Yuma Sato" }]
+keywords = [
+  "pptx",
+  "powerpoint",
+  "lint",
+  "linter",
+  "qc",
+  "qa",
+  "japanese",
+  "i18n",
+  "accessibility",
+  "presentation",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Office/Business :: Office Suites",
+  "Topic :: Text Processing",
+]
+dependencies = ["python-pptx>=1.0.0", "pillow>=10.0.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6.0"]
+
+[project.scripts]
+pptx-qc = "pptx_qc.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/YOURNAME/pptx-qc"
+Issues = "https://github.com/YOURNAME/pptx-qc/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pptx_qc"]
+
+[tool.ruff]
+# Japanese messages are dense per column, so allow a little extra width.
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
