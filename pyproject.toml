@@ -9,7 +9,7 @@ description = "Pre-delivery QC linter for PowerPoint decks: dummy text, missing 
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "Yuma Sato" }]
+authors = [{ name = "BDBDDSCAT" }]
 keywords = [
   "pptx",
   "powerpoint",
