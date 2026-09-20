@@ -44,8 +44,9 @@ dev = ["pytest>=8.0", "ruff>=0.6.0"]
 pptx-qc = "pptx_qc.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/YOURNAME/pptx-qc"
-Issues = "https://github.com/YOURNAME/pptx-qc/issues"
+Homepage = "https://github.com/BDBDDSCAT/pptx-qc"
+Issues = "https://github.com/BDBDDSCAT/pptx-qc/issues"
+Source = "https://github.com/BDBDDSCAT/pptx-qc"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pptx_qc"]

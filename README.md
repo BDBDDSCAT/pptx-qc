@@ -45,9 +45,11 @@ pip install pptx-qc
 Or from source:
 
 ```bash
-git clone https://github.com/YOURNAME/pptx-qc
+git clone https://github.com/BDBDDSCAT/pptx-qc
 cd pptx-qc && pip install -e ".[dev]"
 ```
+
+Repository: <https://github.com/BDBDDSCAT/pptx-qc>
 
 ## Usage
 
