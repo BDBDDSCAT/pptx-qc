@@ -290,9 +290,11 @@ def _norm_autofit(tx_body) -> tuple[float | None, float | None]:  # noqa: ANN001
         return None, None
     scale = node.get("fontScale")
     lnspc = node.get("lnSpcReduction")
+    # DrawingML stores these percentages in thousandths of one percent:
+    # fontScale="80000" means 80%, or a multiplier of 0.8.
     return (
-        float(scale) / 1000.0 if scale is not None else None,
-        float(lnspc) / 1000.0 if lnspc is not None else None,
+        float(scale) / 100000.0 if scale is not None else None,
+        float(lnspc) / 100000.0 if lnspc is not None else None,
     )
 
 

@@ -165,9 +165,11 @@ class Doc:
         found: list[str] = []
         for node in self.prs.element.iter(qn("p:embeddedFontLst")):
             for font_node in node.iter(qn("p:embeddedFont")):
-                tf = font_node.find(qn("p:typeface"))
-                if tf is not None and tf.text:
-                    found.append(tf.text)
+                font = font_node.find(qn("p:font"))
+                if font is not None:
+                    typeface = font.get("typeface")
+                    if typeface:
+                        found.append(typeface)
         return found
 
     def theme_fonts(self) -> list[tuple[str | None, str | None]]:

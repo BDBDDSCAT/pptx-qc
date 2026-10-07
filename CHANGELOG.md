@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Read embedded typefaces from the PowerPoint `p:font` declaration so embedded
+  Windows and custom fonts no longer trigger false `PPTX101` / `PPTX103` findings.
+- Interpret DrawingML autofit percentages correctly: an 80% font scale is reported
+  as 80%, shrink-only settings are detected, and estimated heights remain positive
+  when line spacing is reduced.
+
 ## 0.1.0 — 2026-09-20
 
 First release.

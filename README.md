@@ -128,6 +128,8 @@ for finding in report.findings:
 
 ## Roadmap / 実装したいもの
 
+Current reliability goals and acceptance checks are tracked in [docs/GOALS.md](docs/GOALS.md).
+
 - [ ] 用語ゆれチェック（「顧客」と「お客様」が混在、など）
 - [ ] SmartArt・グラフ・WordArt 内の文字を検査対象に
 - [ ] 配色数のチェック（主色 3 + 補助色 2 以内）

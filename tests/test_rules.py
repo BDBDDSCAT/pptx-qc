@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from pptx_qc import Settings, lint_file
+from pptx_qc import Doc, Settings, lint_file
 from pptx_qc.findings import Severity
+from pptx_qc.rules import estimate_overflow
 
-from .conftest import INCH, new_deck, save, set_text, tiny_png  # noqa: F401
+from .conftest import INCH, embed_font, new_deck, save, set_text, tiny_png  # noqa: F401
 
 
 def rules_of(report) -> set[str]:
@@ -45,6 +46,35 @@ def test_windows_only_font_is_reported(tmp_path):
     set_text(slide.placeholders[1], "日本語のテキスト", font="Meiryo")
     report = check(prs, tmp_path)
     assert "PPTX101" in rules_of(report)
+
+
+def test_embedded_windows_font_is_not_reported(tmp_path):
+    prs, slide = new_deck()
+    set_text(slide.placeholders[1], "日本語のテキスト", font="Meiryo")
+    embed_font(prs, "MEIRYO")
+    path = save(prs, tmp_path / "embedded.pptx")
+    assert Doc(path).embedded_fonts() == ["MEIRYO"]
+    assert "PPTX101" not in rules_of(lint_file(path, Settings()))
+
+
+def test_unrelated_embedded_font_does_not_hide_windows_font(tmp_path):
+    prs, slide = new_deck()
+    set_text(slide.placeholders[1], "日本語のテキスト", font="Meiryo")
+    embed_font(prs, "Noto Sans JP")
+    assert "PPTX101" in rules_of(check(prs, tmp_path))
+
+
+def test_embedded_custom_font_does_not_report_no_embedded_fonts(tmp_path):
+    prs, slide = new_deck()
+    set_text(slide.placeholders[1], "Presentation text", font="Custom Brand Font")
+    embed_font(prs, "Custom Brand Font")
+    assert "PPTX103" not in rules_of(check(prs, tmp_path))
+
+
+def test_custom_font_without_embedding_is_reported(tmp_path):
+    prs, slide = new_deck()
+    set_text(slide.placeholders[1], "Presentation text", font="Custom Brand Font")
+    assert "PPTX103" in rules_of(check(prs, tmp_path))
 
 
 def test_latin_font_on_japanese_text(tmp_path):
@@ -106,6 +136,51 @@ def test_overflow_tolerance_can_be_raised(tmp_path):
     box.text_frame.text = "日本語のテキストを非常に小さな箱に無理やり入れようとすると溢れます。"
     report = check(prs, tmp_path, settings=Settings(overflow_tolerance=100.0))
     assert "PPTX201" not in rules_of(report)
+
+
+@pytest.mark.parametrize(
+    ("attributes", "expected"),
+    [
+        ({"fontScale": "80000"}, "文字 80%"),
+        ({"fontScale": "80000", "lnSpcReduction": "20000"}, "文字 80% / 行間 -20%"),
+        ({"fontScale": "100000", "lnSpcReduction": "10000"}, "文字 100% / 行間 -10%"),
+        ({"lnSpcReduction": "20000"}, "行間 -20%"),
+    ],
+)
+def test_autofit_reports_real_percentages(tmp_path, attributes, expected):
+    prs, slide = new_deck()
+    box = slide.shapes.add_textbox(INCH(0.5), INCH(0.5), INCH(2), INCH(2))
+    set_text(box, "Presentation text", size=20)
+    box.text_frame._txBody.bodyPr.get_or_change_to_normAutofit().attrib.update(attributes)
+    report = check(prs, tmp_path)
+    finding = next(f for f in report.findings if f.rule == "PPTX202" and f.shape == box.name)
+    assert expected in finding.message
+
+
+def test_autofit_at_full_scale_is_not_reported_as_shrunk(tmp_path):
+    prs, slide = new_deck()
+    box = slide.shapes.add_textbox(INCH(0.5), INCH(0.5), INCH(2), INCH(2))
+    set_text(box, "Presentation text", size=20)
+    box.text_frame._txBody.bodyPr.get_or_change_to_normAutofit().set("fontScale", "100000")
+    assert not any(f.rule == "PPTX202" and f.shape == box.name for f in check(prs, tmp_path).findings)
+
+
+def test_autofit_reduces_estimated_required_height(tmp_path):
+    prs, slide = new_deck()
+    box = slide.shapes.add_textbox(INCH(0.5), INCH(0.5), INCH(2), INCH(2))
+    set_text(box, "Text", size=20)
+    path = save(prs, tmp_path / "plain.pptx")
+    plain_frame = next(f for f in Doc(path).frames() if f.shape == box.name)
+    plain = estimate_overflow(plain_frame, Settings())
+
+    box.text_frame._txBody.bodyPr.get_or_change_to_normAutofit().attrib.update(
+        {"fontScale": "80000", "lnSpcReduction": "20000"}
+    )
+    path = save(prs, tmp_path / "shrunk.pptx")
+    shrunk_frame = next(f for f in Doc(path).frames() if f.shape == box.name)
+    shrunk = estimate_overflow(shrunk_frame, Settings())
+    assert 0 < shrunk[1] < plain[1]
+    assert shrunk[2] == plain[2]
 
 
 def test_offslide_shape(tmp_path):
