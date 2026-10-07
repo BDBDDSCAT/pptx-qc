@@ -35,7 +35,7 @@ classifiers = [
   "Topic :: Office/Business :: Office Suites",
   "Topic :: Text Processing",
 ]
-dependencies = ["python-pptx>=1.0.0", "pillow>=10.0.0"]
+dependencies = ["python-pptx>=1.0.0", "pillow>=10.0.0", "tomli>=2.0.1; python_version < '3.11'"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6.0"]

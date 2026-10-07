@@ -18,27 +18,35 @@ deck without being distracted by errors in the linter itself.
   estimated text height after shrinking.
 
 Acceptance checks: `python -m pytest`, `ruff check .`, and `git diff --check`.
-The implementation passes all 37 tests, including 10 new regression cases.
+At completion of this iteration, all 37 tests passed, including 10 new regression cases.
 Font checks inspect the embedded-font declarations; they do not validate glyph
 data or whether a recipient can use a particular embedded font.
 
+## Second iteration: configuration reliability
+
+- [x] Install `tomli` only on Python versions below 3.11, with the conditional
+  dependency exercised through a fresh Python 3.10 installation.
+- [x] Validate table/list shapes, boolean values, finite numeric thresholds,
+  non-negative limits, positive overflow tolerance, and recognized severity names.
+- [x] Report the offending setting and exit with status 2 before linting when
+  a configuration value is invalid, including NaN and infinity.
+- [x] Preserve root-level and `[pptx-qc]` configuration, zero font/image thresholds,
+  CLI override precedence, merged ignores, and `--no-config` behavior.
+- [x] Exercise valid configuration and error handling on Python 3.10 and 3.12.
+
+Acceptance checks: 75 tests pass on both Python 3.10.21 (`tomli`) and Python 3.12
+(`tomllib`); `ruff check .` and `git diff --check` pass. This iteration adds 38
+configuration and CLI cases. Validation applies to loaded TOML configuration;
+library callers still construct `Settings` directly.
+
 ## Next goals
 
-1. **Support TOML configuration on every advertised Python version.**
-   Python 3.10 falls back to `tomli`, but the package does not declare that
-   dependency. Add a conditional dependency and verify loading the same config
-   on Python 3.10 and 3.11+.
-2. **Reject invalid configuration before running rules.**
-   `load_settings` currently assigns numeric and severity values without checking
-   them. Invalid thresholds can produce rule-execution warnings instead of a
-   config error. Validate types, ranges, and severity values with actionable
-   errors and exit status 2.
-3. **Apply nearby configuration per deck in batch checks.**
+1. **Apply nearby configuration per deck in batch checks.**
    The CLI currently finds configuration next to only the first target. Resolve
    configuration per discovered file, while preserving explicit `--config`,
    `--no-config`, and CLI override precedence. Verify two directories with
    different thresholds in one invocation.
-4. **Resolve inherited text formatting for font checks.**
+2. **Resolve inherited text formatting for font checks.**
    Many PowerPoint runs inherit their family or size from paragraph, placeholder,
    layout, master, or theme styles. The loader currently reads only run/paragraph
    font names and explicit run sizes. Add inheritance fixtures and effective

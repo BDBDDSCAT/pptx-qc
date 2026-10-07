@@ -109,6 +109,15 @@ severity = { PPTX205 = "warning" }
 dummy_patterns = ["【仮】", "XXX株式会社", "[会社名]"]
 ```
 
+Numeric thresholds must be finite. `min_font_size` and `min_image_dpi` must be
+non-negative (0 disables those checks); `overflow_tolerance` must be positive,
+and `max_font_families` must be a non-negative integer. `ignore` and
+`dummy_patterns` are arrays of strings; dummy patterns must not be blank.
+`severity` values are `error`, `warning`, or `info`; `fail_on` is `error`,
+`warning`, or `none`, and `show_info` is a boolean. Invalid configuration produces
+an error naming the setting and exits with status 2 before the deck is checked.
+Python 3.10 automatically installs the `tomli` parser; Python 3.11+ uses `tomllib`.
+
 ## CI
 
 ```yaml
