@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- Install `tomli` automatically on Python 3.10 so TOML configuration works on
+  every supported Python version.
+- Validate configuration types, numeric ranges, finite thresholds, and severity
+  names before running rules. Invalid configuration now identifies the setting
+  and returns exit status 2 instead of misleading QC or deck-read failures.
+- Read embedded typefaces from the PowerPoint `p:font` declaration so embedded
+  Windows and custom fonts no longer trigger false `PPTX101` / `PPTX103` findings.
+- Interpret DrawingML autofit percentages correctly: an 80% font scale is reported
+  as 80%, shrink-only settings are detected, and estimated heights remain positive
+  when line spacing is reduced.
+
 ## 0.1.0 — 2026-09-20
 
 First release.

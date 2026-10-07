@@ -4,6 +4,12 @@ from __future__ import annotations
 
 from PIL import Image
 from pptx import Presentation
+from pptx.opc.constants import CONTENT_TYPE as CT
+from pptx.opc.constants import RELATIONSHIP_TYPE as RT
+from pptx.opc.package import Part
+from pptx.opc.packuri import PackURI
+from pptx.oxml import parse_xml
+from pptx.oxml.ns import nsdecls
 from pptx.util import Inches, Pt
 
 
@@ -34,6 +40,24 @@ def tiny_png(path, size=(48, 48)):
 def save(prs, path):
     prs.save(path)
     return path
+
+
+def embed_font(prs, typeface: str):
+    """Add embedded-font metadata and its related part for a saved-deck fixture.
+
+    The font payload is a stub: the checks inspect the declaration, not glyph data.
+    """
+    part = Part(PackURI("/ppt/fonts/font1.fntdata"), CT.X_FONTDATA, prs.part.package, b"test-font")
+    rid = prs.part.relate_to(part, RT.FONT)
+    font_list = parse_xml(f'<p:embeddedFontLst {nsdecls("p", "r")}/>')
+    font = parse_xml(f'<p:embeddedFont {nsdecls("p", "r")}/>')
+    declaration = parse_xml(f'<p:font {nsdecls("p")}/>')
+    declaration.set("typeface", typeface)
+    font.append(declaration)
+    regular = parse_xml(f'<p:regular {nsdecls("p", "r")} r:id="{rid}"/>')
+    font.append(regular)
+    font_list.append(font)
+    prs.element.insert_element_before(font_list, "p:defaultTextStyle", "p:modifyVerifier", "p:extLst")
 
 
 INCH = Inches

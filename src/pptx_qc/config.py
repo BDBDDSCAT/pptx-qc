@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import sys
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -219,6 +220,38 @@ def find_config(start: Path | None = None) -> Path | None:
     return None
 
 
+def _string_array(key: str, value: object) -> list[str]:
+    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+        raise ValueError(f"{key} must be an array of strings")
+    if key == "dummy_patterns" and any(not item.strip() for item in value):
+        raise ValueError("dummy_patterns must contain only non-empty patterns")
+    return value
+
+
+def _choice(key: str, value: object, choices: tuple[str, ...]) -> str:
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in choices:
+            return normalized
+    raise ValueError(f"{key} must be one of: {', '.join(choices)}")
+
+
+def _threshold(key: str, value: object) -> int | float:
+    integer = key == "max_font_families"
+    positive = key == "overflow_tolerance"
+    expected = "integer" if integer else "number"
+    bound = "> 0" if positive else ">= 0"
+    valid_type = isinstance(value, int) if integer else isinstance(value, (int, float))
+    if (
+        isinstance(value, bool)
+        or not valid_type
+        or (isinstance(value, float) and not math.isfinite(value))
+        or (value <= 0 if positive else value < 0)
+    ):
+        raise ValueError(f"{key} must be a finite {expected} {bound}")
+    return value
+
+
 def load_settings(path: Path | None) -> Settings:
     if path is None:
         return Settings()
@@ -228,21 +261,34 @@ def load_settings(path: Path | None) -> Settings:
         raw = tomllib.load(fh)
 
     data = raw.get("pptx-qc", raw)
+    if not isinstance(data, dict):
+        raise ValueError("pptx-qc must be a TOML table (use [pptx-qc])")
+
     settings = Settings()
     if "ignore" in data:
-        settings.ignore = {str(x) for x in data["ignore"]}
+        settings.ignore = set(_string_array("ignore", data["ignore"]))
     if "severity" in data:
-        settings.severity_overrides = {str(k): str(v) for k, v in data["severity"].items()}
+        severity = data["severity"]
+        if not isinstance(severity, dict):
+            raise ValueError("severity must be a table of rule ids and severity names")
+        settings.severity_overrides = {
+            key: _choice(f"severity.{key}", value, ("error", "warning", "info"))
+            for key, value in severity.items()
+        }
     if "dummy_patterns" in data:
-        settings.dummy_patterns = tuple(str(x) for x in data["dummy_patterns"])
+        settings.dummy_patterns = tuple(_string_array("dummy_patterns", data["dummy_patterns"]))
     for key in (
         "min_font_size",
         "min_image_dpi",
         "overflow_tolerance",
         "max_font_families",
-        "fail_on",
-        "show_info",
     ):
         if key in data:
-            setattr(settings, key, data[key])
+            setattr(settings, key, _threshold(key, data[key]))
+    if "fail_on" in data:
+        settings.fail_on = _choice("fail_on", data["fail_on"], ("error", "warning", "none"))
+    if "show_info" in data:
+        if not isinstance(data["show_info"], bool):
+            raise ValueError("show_info must be a boolean (true or false)")
+        settings.show_info = data["show_info"]
     return settings
